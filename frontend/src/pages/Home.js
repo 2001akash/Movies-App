@@ -6,21 +6,41 @@ const Home = () => {
   const [searchResult, setSearchResult] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    const fetchMovieLists = async () => {
+  const fetchMovieLists = async () => {
+    try {
       const { data } = await axios.get('http://localhost:5000/api/movies', {
         headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('profile')).token}` },
       });
       setMovieLists(data);
-    };
+    } catch (error) {
+      console.error('Error fetching movie lists:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchMovieLists();
   }, []);
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    const { data } = await axios.get(`http://www.omdbapi.com/?apikey=${process.env.REACT_APP_OMDB_API_KEY}&s=${searchTerm}`);
-    setSearchResult(data.Search);
+    try {
+      const response = await axios.get(`http://www.omdbapi.com/?apikey=${process.env.REACT_APP_OMDB_API_KEY}&s=${searchTerm}`);
+      setSearchResult(response.data.Search);
+    } catch (error) {
+      console.error('Error fetching data from OMDB API:', error);
+    }
+  };
+
+  const handleAddToFavorites = async (movie) => {
+    try {
+      await axios.post('http://localhost:5000/api/movies/add-to-favorites', movie, {
+        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('profile')).token}` },
+      });
+      // Refresh movie lists after adding to favorites
+      fetchMovieLists();
+    } catch (error) {
+      console.error('Error adding movie to favorites:', error);
+    }
   };
 
   return (
@@ -41,6 +61,7 @@ const Home = () => {
           <div key={movie.imdbID}>
             <h3>{movie.Title}</h3>
             <img src={movie.Poster} alt={movie.Title} />
+            <button onClick={() => handleAddToFavorites(movie)}>Add to Favorites</button>
           </div>
         ))}
       </div>
