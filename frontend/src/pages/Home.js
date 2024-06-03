@@ -33,15 +33,28 @@ const Home = () => {
 
   const handleAddToFavorites = async (movie) => {
     try {
-      await axios.post('http://localhost:5000/api/movies/add-to-favorites', movie, {
-        headers: { Authorization: `Bearer ${JSON.parse(localStorage.getItem('profile')).token}` },
+      const response = await fetch('http://localhost:5000/api/movies/add-to-favorites', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}` // Assuming you store the token in local storage
+        },
+        body: JSON.stringify(movie)
       });
-      // Refresh movie lists after adding to favorites
-      fetchMovieLists();
+
+      if (!response.ok) {
+        throw new Error('Failed to add movie to favorites');
+      }
+
+      const data = await response.json();
+      console.log('Movie added to favorites:', data);
     } catch (error) {
       console.error('Error adding movie to favorites:', error);
     }
   };
+
+  
+
 
   return (
     <div>
